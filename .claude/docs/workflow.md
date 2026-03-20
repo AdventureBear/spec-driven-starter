@@ -6,7 +6,7 @@ Every feature starts with a spec, not code. This keeps development intentional,
 testable, and reviewable.
 
 ```
-/clarify → /specify → /plan → /tasks → /implement → /review → /pr
+/clarify → /specify → /plan → /tasks → /tdd → /implement → /review → /pr
 ```
 
 ---
@@ -39,13 +39,22 @@ No code yet — just the blueprint.
 Breaks the plan into discrete, ordered tasks stored in `specs/<name>/tasks.md`.
 Tasks should each be implementable in a single focused session.
 
-### 5. `/implement <feature-name>`
+### 5. `/tdd <feature-name>`
+Maps every acceptance criterion in `spec.md` to a test stub (`it.todo(...)`) and writes
+those stubs into co-located test files — before any implementation exists.
+
+This is the **red phase**: tests are present but nothing passes yet.
+`/implement` then fills in the stubs (green phase).
+
+> Skip this step only if the feature has zero business logic (e.g. a pure static page).
+
+### 6. `/implement <feature-name>`
 Works through `tasks.md` task by task, checking each off as it's completed.
 Writes code, tests, and migrations.
 
 At each task boundary, Claude pauses for your review before continuing.
 
-### 6. `/review <feature-name>`
+### 7. `/review <feature-name>`
 The `reviewer` agent audits the changes against the spec's acceptance criteria,
 the project's coding standards (from `CLAUDE.md`), and common failure modes.
 

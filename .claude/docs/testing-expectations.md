@@ -1,7 +1,22 @@
 # Testing Expectations
 
 Standards for test coverage and quality in this project.
-Read by the `reviewer`, `test-writer`, and `/tasks` command.
+Read by the `reviewer`, `test-writer`, and `/tdd` command.
+
+---
+
+## TDD: Tests Before Code
+
+Tests are written in the `/tdd` phase, before any implementation exists.
+`/implement` writes code to make those tests pass.
+
+**Red → Green → Refactor:**
+1. `/tdd` writes real failing tests (import errors = correct red state)
+2. `/implement` writes code until tests pass (green)
+3. `reviewer` checks for unnecessary complexity (refactor)
+
+Do not write tests after the fact. Do not use `it.todo()` — it is a checklist,
+not a test, and provides zero signal during development.
 
 ---
 
@@ -121,6 +136,7 @@ Add `data-testid` attributes to source components rather than using CSS workarou
 - Manual testing noted in a comment
 - `console.log` checking during dev
 - A test marked `.skip` or `.todo`
+- A test written after the implementation it covers
 
 ---
 

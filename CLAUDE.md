@@ -18,7 +18,7 @@ Read `.claude/docs/workflow.md` to understand the development process.
 Always follow the spec-driven workflow:
 
 ```
-/clarify → /specify → /plan → /tasks → /implement → /review → /pr
+/clarify → /specify → /plan → /tasks → /tdd → /implement → /review → /pr
 ```
 
 Never write feature code without a spec in `specs/<feature>/spec.md`.
@@ -51,10 +51,17 @@ Never write feature code without a spec in `specs/<feature>/spec.md`.
 
 ## Task discipline
 
+When executing `/tdd`:
+1. Read every acceptance criterion in `spec.md` and the API contract in `plan.md`.
+2. Write real, executable failing tests — no `it.todo()`, no stubs, real `expect()` assertions.
+3. Test descriptions must describe what the user sees or can do, not implementation details.
+4. Tests must fail for the right reason: missing module (import error), not a logic error.
+5. Do not write any implementation code during this phase.
+
 When executing `/implement`:
 1. Do one task at a time.
-2. Write the test before or alongside the implementation.
-3. Run `npm test` and confirm it passes before moving to the next task.
+2. Write implementation code to make the failing tests from `/tdd` pass — do not write new tests or invent new assertions.
+3. Run `npm test` and confirm the previously-failing tests now pass before moving to the next task.
 4. Pause and summarize after each task.
 
 ---
