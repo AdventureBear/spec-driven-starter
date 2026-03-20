@@ -12,20 +12,28 @@ Create a feature specification for: $ARGUMENTS
 
 ### 1. Determine mode
 
-Read `.claude/specs/_roadmap.md`. Search for `$ARGUMENTS` as a keyword.
+Read `specs/_roadmap.md` (if it exists). Search for `$ARGUMENTS` as a keyword.
 - If found: extract the feature row (description, priority, notes) and use as input
 - If not found: use `$ARGUMENTS` as the description directly
-- If `$ARGUMENTS == "digest"`: list all `.claude/specs/NN-*/spec.md` files with one-line summaries, then stop
+- If `$ARGUMENTS == "digest"`: list all `specs/[0-9]*/spec.md` files with one-line summaries, then stop
 
 ### 2. Assign spec number
 
-List existing folders under `.claude/specs/`. Find the highest `NN` prefix. Assign the next number (zero-padded to 2 digits). Derive a short kebab-case name from the feature description.
+List **all** existing spec folders — both active and archived — to find the true highest number:
 
-Spec folder: `.claude/specs/NN-feature-name/`
+```bash
+ls specs/ specs/archive/ 2>/dev/null | grep -E '^[0-9]'
+```
+
+Parse each folder name to extract its numeric prefix (e.g. `04-library-ui` → 4, `11b-training-plan-builder` → 11). The next spec number = highest found + 1.
+
+For sub-features of an existing spec, use letter suffixes (e.g. `11a`, `11b`).
+
+Spec folder: `specs/NN-feature-name/`
 
 ### 3. Write spec.md
 
-Create `.claude/specs/NN-feature-name/spec.md`:
+Create `specs/NN-feature-name/spec.md`:
 
 ```markdown
 # Spec NN: Feature Name
@@ -61,8 +69,12 @@ FR-002: ...
 
 ### 4. Update roadmap
 
-If this spec was created from a roadmap keyword, move it from the roadmap table to a "Specced" section, referencing the spec folder.
+If this spec was created from a roadmap keyword, move it from the roadmap table to a "Specced" section referencing the spec folder.
 
 ### 5. Confirm
 
-Output the spec number, folder path, and summary. Ask if any section needs revision before running `/plan`.
+Output the spec number, folder path, and summary. Ask if any section needs revision, then suggest:
+
+```
+Next step: /create-worktree NN-feature-name
+```

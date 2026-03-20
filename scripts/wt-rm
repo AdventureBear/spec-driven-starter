@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+FEATURE="${1:-}"
+if [[ -z "$FEATURE" ]]; then
+  echo "Usage: ./scripts/wt-rm <NN-name>"
+  exit 1
+fi
+
+# Must run from .../.worktrees/main
+if [[ "$(pwd)" != *"/.worktrees/main" ]]; then
+  echo "ERROR: run wt-rm from .../.worktrees/main"
+  exit 1
+fi
+
+REPO_ROOT="$(pwd)"
+BASE_DIR="$(dirname "$REPO_ROOT")"
+WORKTREE_PATH="$BASE_DIR/$FEATURE"
+BRANCH="$FEATURE"
+
+cd "$REPO_ROOT"
+
+# If git still knows this worktree, remove it cleanly
+if git worktree list --porcelain | awk '/^worktree /{print $2}' | grep -qx "$WORKTREE_PATH"; then
+  git worktree remove "$WORKTREE_PATH" --force || true
+fi
+
+# Delete branch if it exists
+if git show-ref --verify --quiet "refs/heads/$BRANCH"; then
+  git branch -D "$BRANCH" || true
+fi
+
+# ============================================================================
+# PROJECT-SPECIFIC TEARDOWN
+# Add any project-specific teardown here (e.g., drop a feature database).
+# Example for Postgres:
+#   docker exec -i myapp-db psql -U postgres -d postgres -c \
+#     "DROP DATABASE IF EXISTS myapp_${DB_SAFE};"
+# ============================================================================
+
+# Always remove folder on disk (fixes orphaned dirs)
+rm -rf "$WORKTREE_PATH" || true
+
+echo "Removed: $FEATURE (branch + folder)"

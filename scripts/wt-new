@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Usage:
+#   ./scripts/wt-new 03-user-auth
+#   ./scripts/wt-new 03-user-auth --dev
+
+FEATURE="${1:-}"
+FLAG="${2:-}"
+
+if [[ -z "$FEATURE" ]]; then
+  echo "Usage: ./scripts/wt-new <NN-name> [--dev]"
+  exit 1
+fi
+
+# Must run from .../.worktrees/main
+if [[ "$(pwd)" != *"/.worktrees/main" ]]; then
+  echo "ERROR: run wt-new from .../.worktrees/main"
+  exit 1
+fi
+
+# Require numbered input NN-name
+prefix="${FEATURE%%-*}"
+rest="${FEATURE#*-}"
+if [[ ! "$prefix" =~ ^[0-9]+[a-z]?$ || "$rest" == "$FEATURE" ]]; then
+  echo "ERROR: Feature must be numbered (run /specify first)"
+  echo "Examples: 03-user-auth, 03a-user-auth-oauth"
+  exit 1
+fi
+
+# Dev port per feature with letter suffix support:
+#   17  -> 3017
+#   17a -> 3171 (17×10 + 1)
+#   17b -> 3172 (17×10 + 2)
+NUM="${prefix%%[a-z]}"
+LETTER="${prefix#$NUM}"
+
+if [[ -z "$LETTER" ]]; then
+  DEV_PORT=$((3000 + 10#$NUM))
+else
+  LETTER_POS=$(printf '%d' "'$LETTER")
+  LETTER_POS=$((LETTER_POS - 96))  # 'a' is ASCII 97, so 97-96=1
+  DEV_PORT=$((3000 + (10#$NUM * 10) + LETTER_POS))
+fi
+
+REPO_ROOT="$(pwd)"                 # .../.worktrees/main
+BASE_DIR="$(dirname "$REPO_ROOT")" # .../.worktrees
+WORKTREE_PATH="$BASE_DIR/$FEATURE"
+BRANCH="$FEATURE"
+
+cleanup_on_fail() {
+  local ec=$?
+  [[ $ec -eq 0 ]] && return 0
+  echo "Cleanup after failure..."
+  rm -rf "$WORKTREE_PATH" >/dev/null 2>&1 || true
+  git -C "$REPO_ROOT" worktree remove "$WORKTREE_PATH" --force >/dev/null 2>&1 || true
+  git -C "$REPO_ROOT" branch -D "$BRANCH" >/dev/null 2>&1 || true
+}
+trap cleanup_on_fail EXIT
+
+cd "$REPO_ROOT"
+git checkout main >/dev/null 2>&1 || true
+git pull --ff-only >/dev/null 2>&1 || true
+
+# --- COMMIT SPEC FIRST (so it exists in the new worktree) ---
+SPEC_MATCHES="$(find "$REPO_ROOT/specs" -maxdepth 1 -name "${FEATURE}*" 2>/dev/null || true)"
+if [[ -z "$SPEC_MATCHES" ]]; then
+  echo "ERROR: No spec found in specs/ for: $FEATURE"
+  echo "Run /specify first to create the spec."
+  exit 1
+fi
+
+# Stage spec artifacts only
+while IFS= read -r p; do
+  [[ -n "$p" ]] && git add "$p"
+done <<< "$SPEC_MATCHES"
+
+# Commit if staging changed anything
+if ! git diff --cached --quiet; then
+  git commit -m "spec: $FEATURE"
+fi
+
+# --- WORKTREE ---
+# If folder exists but isn't registered, delete it
+if [[ -d "$WORKTREE_PATH" ]]; then
+  if ! git worktree list --porcelain | awk '/^worktree /{print $2}' | grep -qx "$WORKTREE_PATH"; then
+    rm -rf "$WORKTREE_PATH"
+  fi
+fi
+
+# Create worktree + branch if needed
+if git worktree list --porcelain | awk '/^worktree /{print $2}' | grep -qx "$WORKTREE_PATH"; then
+  echo "Worktree exists: $WORKTREE_PATH"
+else
+  if git show-ref --verify --quiet "refs/heads/$BRANCH"; then
+    git worktree add "$WORKTREE_PATH" "$BRANCH"
+  else
+    git worktree add -b "$BRANCH" "$WORKTREE_PATH" main
+  fi
+fi
+
+# Shared env symlinks (NOT .env.local)
+for f in .env .env.production; do
+  [[ -f "$REPO_ROOT/$f" ]] && ln -sf "$REPO_ROOT/$f" "$WORKTREE_PATH/$f"
+done
+
+# Write .env.local with dev port
+cat > "$WORKTREE_PATH/.env.local" <<EOF
+PORT=$DEV_PORT
+EOF
+
+# Install deps if missing
+cd "$WORKTREE_PATH"
+if [[ ! -d node_modules ]]; then
+  npm install
+fi
+
+# ============================================================================
+# PROJECT-SPECIFIC SETUP
+# Add any project-specific setup here (e.g., database migrations, seeding).
+# Example for Prisma:
+#   npx prisma db push --accept-data-loss
+#   npx prisma db seed
+# ============================================================================
+
+trap - EXIT
+
+echo ""
+echo "Worktree setup complete!"
+echo ""
+echo "Worktree path : $WORKTREE_PATH"
+echo "Branch        : $FEATURE"
+echo "Dev port      : $DEV_PORT  →  http://localhost:$DEV_PORT"
+echo ""
+echo "Next steps:"
+echo "  cd $WORKTREE_PATH"
+if [[ "$FLAG" == "--dev" ]]; then
+  echo "  npm run dev    # already at port $DEV_PORT via .env.local"
+fi
+echo "  claude"
+echo "  /plan $FEATURE"

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# List all worktrees with their branches and spec folders
+git worktree list --porcelain | awk '
+  /^worktree / { wt=$2 }
+  /^branch /   { branch=$2; gsub("refs/heads/","",branch); printf "%-50s %s\n", wt, branch }
+'
