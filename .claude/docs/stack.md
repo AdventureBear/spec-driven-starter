@@ -19,12 +19,16 @@ Agents read this file to make consistent decisions.
 - No `any` — use `unknown` + type narrowing
 - Zod for all runtime validation (forms, API inputs, env vars)
 
-## Auth: NextAuth.js v5 (Auth.js)
+## Auth: Better Auth
 
-- Config: `src/lib/auth.ts`
-- Session: `auth()` server-side, `useSession()` client-side
-- Protect routes via middleware (`src/middleware.ts`)
-- DB adapter: Prisma
+- Server config: `src/lib/auth.ts` — `betterAuth()` with `prismaAdapter`
+- Client config: `src/lib/auth-client.ts` — `createAuthClient()` from `better-auth/react`
+- Session (Server Component): `auth.api.getSession({ headers: await headers() })`
+- Session (Client Component): `useSession()` from `src/lib/auth-client.ts`
+- Route handler: `src/app/api/auth/[...all]/route.ts`
+- Protect routes in middleware via `getSessionCookie` from `better-auth/cookies`
+- DB adapter: built into `better-auth` — no separate adapter package needed
+- Schema: run `npx @better-auth/cli generate` to append required auth models
 
 ## Database: PostgreSQL + Prisma
 
