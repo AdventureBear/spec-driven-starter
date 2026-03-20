@@ -147,7 +147,7 @@ Run it periodically or before starting a new project.
 | Database | PostgreSQL + Prisma ORM |
 | Styling | Tailwind CSS v4 + shadcn/ui |
 | Forms | React Hook Form + Zod |
-| Testing | Vitest + Playwright |
+| Testing | Jest + Playwright |
 | State | Zustand + TanStack Query |
 | Email | Resend + React Email |
 | Uploads | Uploadthing |

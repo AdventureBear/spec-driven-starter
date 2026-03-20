@@ -46,7 +46,7 @@ Agents read this file to make consistent decisions.
 
 ## Testing
 
-- Unit/integration: Vitest (`npm test`)
+- Unit/integration: Jest (`npm test`)
 - E2E: Playwright (`npm run test:e2e`)
 - Test files: co-located (`*.test.ts`) or in `tests/`
 
