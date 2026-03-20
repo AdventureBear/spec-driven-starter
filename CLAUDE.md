@@ -31,7 +31,7 @@ Never write feature code without a spec in `specs/<feature>/spec.md`.
 - Validate all inputs with Zod at the boundary (API routes, server actions, forms).
 - Server Components by default. Only use `"use client"` when necessary.
 - Never import `PrismaClient` directly — use `src/lib/db.ts`.
-- Use `src/lib/auth.ts` for session access, never raw JWT manipulation.
+- Use `auth()` from `src/lib/auth.ts` for session access in Server Components — never call `getServerSession` directly.
 - Co-locate tests with source files (`*.test.ts`).
 - Prefer editing existing files over creating new ones.
 - Keep components small and focused.

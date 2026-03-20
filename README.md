@@ -82,8 +82,9 @@ src/
     api/auth/[...nextauth]/route.ts
   lib/
     db.ts               — Prisma client singleton
-    auth.ts             — NextAuth config + getSession helper
+    auth.ts             — Auth.js v5: handlers, auth(), signIn, signOut
   components/           — empty, ready for your components
+middleware.ts           — Auth.js route protection (commented out by default)
 prisma/
   schema.prisma         — PostgreSQL datasource, no models yet
   seed/seed.ts          — seed script placeholder
@@ -129,7 +130,7 @@ See `.claude/docs/workflow.md` for the full workflow guide.
 |---|---|
 | Framework | Next.js 16, App Router |
 | Language | TypeScript (strict) |
-| Auth | NextAuth.js v4 |
+| Auth | Auth.js v5 (next-auth@5) |
 | Database | PostgreSQL + Prisma ORM |
 | Styling | Tailwind CSS v4 |
 | Forms | React Hook Form + Zod |

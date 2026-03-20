@@ -152,13 +152,10 @@ export default function Home() {
 EOF
 echo "✓ src/app/page.tsx"
 
-# ── NextAuth route handler ────────────────────────────────────
+# ── Auth.js v5 route handler ──────────────────────────────────
 cat > "src/app/api/auth/[...nextauth]/route.ts" << 'EOF'
-import NextAuth from 'next-auth'
-import { authOptions } from '@/lib/auth'
-
-const handler = NextAuth(authOptions)
-export { handler as GET, handler as POST }
+import { handlers } from '@/lib/auth'
+export const { GET, POST } = handlers
 EOF
 echo "✓ src/app/api/auth/[...nextauth]/route.ts"
 
@@ -174,22 +171,46 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 EOF
 echo "✓ src/lib/db.ts"
 
-# ── src/lib/auth.ts ───────────────────────────────────────────
+# ── src/lib/auth.ts (Auth.js v5) ──────────────────────────────
 cat > src/lib/auth.ts << 'EOF'
-import { getServerSession } from 'next-auth'
-import type { NextAuthOptions } from 'next-auth'
+import NextAuth from 'next-auth'
+import { PrismaAdapter } from '@auth/prisma-adapter'
+import { prisma } from './db'
 
-export const authOptions: NextAuthOptions = {
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  adapter: PrismaAdapter(prisma),
   providers: [
     // Configure providers based on PROJECT_SPEC.md
     // e.g. import GitHub from 'next-auth/providers/github'
+    //      GitHub({ clientId: process.env.AUTH_GITHUB_ID!, clientSecret: process.env.AUTH_GITHUB_SECRET! })
   ],
-  session: { strategy: 'jwt' },
-}
-
-export const getSession = () => getServerSession(authOptions)
+  callbacks: {
+    session({ session, user }) {
+      session.user.id = user.id
+      return session
+    },
+  },
+})
 EOF
 echo "✓ src/lib/auth.ts"
+
+# ── src/middleware.ts ──────────────────────────────────────────
+cat > src/middleware.ts << 'EOF'
+import { auth } from '@/lib/auth'
+
+export default auth((req) => {
+  // Protect routes — uncomment and customize as needed:
+  // if (!req.auth) {
+  //   return Response.redirect(new URL('/login', req.url))
+  // }
+})
+
+export const config = {
+  // Match all routes except static files and Next.js internals
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+}
+EOF
+echo "✓ src/middleware.ts"
 
 # ── prisma/schema.prisma ──────────────────────────────────────
 cat > prisma/schema.prisma << 'EOF'
